@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+*.log
+
+# Environments
+.venv/
+.env
+DMRC_Chatbot/.env
+
+# Local data/cache
+DMRC_Chatbot/chroma_db/
+DMRC_Chatbot/*.sqlite3
+
+# OS/IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Build/other
+node_modules/

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DMRC HRMS - Landing</title>
+  <link rel="icon" href="/static/Delhi_Metro_logo.svg.png" />
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:Segoe UI,Tahoma,Verdana,sans-serif;background:#fff;color:#111827}
+    .nav{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid #e5e7eb;position:sticky;top:0;background:#fff}
+    .brand{display:flex;align-items:center;gap:10px;font-weight:700;color:#1e3a8a}
+    .brand img{width:36px;height:36px;object-fit:contain}
+    .links a{margin-left:14px;text-decoration:none;color:#1f2937;font-weight:600}
+    .links a:hover{color:#1e3a8a}
+    .hero{max-width:960px;margin:40px auto;padding:0 20px;display:flex;gap:32px;align-items:center}
+    .hero img{width:140px;height:140px;object-fit:contain}
+    .hero h1{font-size:32px;color:#1e3a8a;margin-bottom:10px}
+    .hero p{color:#374151;line-height:1.6}
+    .cta{margin-top:18px}
+    .btn{display:inline-block;background:linear-gradient(135deg,#1e3a8a,#3b82f6);color:#fff;padding:10px 16px;border-radius:24px;text-decoration:none;font-weight:600}
+    .btn:hover{filter:brightness(1.05)}
+    .footer{max-width:960px;margin:40px auto 20px;padding:0 20px;color:#6b7280;font-size:14px}
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="brand">
+      <img src="/static/Delhi_Metro_logo.svg.png" alt="DMRC" />
+      <span>DMRC HRMS</span>
+    </div>
+    <div class="links">
+      <a href="/">Home</a>
+      <a href="/about">About us</a>
+      <a href="/login">Login</a>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <img src="/static/Delhi_Metro_logo.svg.png" alt="DMRC" />
+    <div>
+      <h1>Welcome to DMRC HRMS Chatbot</h1>
+      <p>
+        Get quick answers about HR policies, procedures, leaves, and more.
+        Use our intelligent assistant to navigate HR information faster.
+      </p>
+      <div class="cta">
+        <a class="btn" href="/login">Get Started</a>
+      </div>
+    </div>
+  </section>
+
+  <div class="footer">© Delhi Metro Rail Corporation Ltd.</div>
+</body>
+</html>

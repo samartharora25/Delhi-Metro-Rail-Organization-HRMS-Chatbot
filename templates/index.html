@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DMRC HRMS Chatbot</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #ffffff; /* changed to white */
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .chat-container {
+            width: 90%;
+            max-width: 800px;
+            height: 90vh;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid #e5e7eb;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); /* blue gradient */
+            color: white;
+            padding: 16px 20px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .dmrc-logo {
+            width: 50px;
+            height: 50px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden; /* so the image is masked to circle */
+            flex-shrink: 0;
+        }
+
+        .dmrc-logo img {
+            width: 48px;
+            height: 48px;
+            object-fit: contain;
+        }
+
+        .header-text {
+            flex: 1;
+        }
+
+        .chat-header h1 {
+            font-size: 22px;
+            margin-bottom: 4px;
+            font-weight: 700;
+        }
+
+        .chat-header p {
+            opacity: 0.95;
+            font-size: 13px;
+        }
+
+        .status-indicator {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #22c55e;
+            box-shadow: 0 0 0 2px rgba(255,255,255,0.6);
+        }
+
+        .status-indicator.error {
+            background: #ef4444;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f8fafc; /* light slate background for messages area */
+        }
+
+        .message {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 15px 20px;
+            border-radius: 16px;
+            position: relative;
+        }
+
+        .message.user .message-content {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); /* blue bubble */
+            color: white;
+            border-bottom-right-radius: 6px;
+        }
+
+        .message.bot .message-content {
+            background: white;
+            color: #111827;
+            border: 1px solid #e5e7eb;
+            border-bottom-left-radius: 6px;
+        }
+
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            margin: 0 10px;
+            overflow: hidden; /* so avatar images are circular */
+            background: transparent; /* remove colored bg */
+        }
+
+        .message-avatar img { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: contain; 
+            background: white; 
+        }
+
+        .message.user .message-avatar {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            color: #fff;
+            order: 2;
+        }
+
+        .message.bot .message-avatar {
+            background: white; /* use white behind the bot logo */
+        }
+
+        .sources {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .sources h4 {
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .source-item {
+            background: #f3f4f6;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+
+        .source-header {
+            font-weight: bold;
+            color: #111827;
+            margin-bottom: 5px;
+        }
+
+        .source-preview {
+            color: #374151;
+            line-height: 1.4;
+        }
+
+        .chat-input-container {
+            padding: 16px 20px;
+            background: white;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .chat-input-form {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 14px 18px;
+            border: 2px solid #e5e7eb;
+            border-radius: 25px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.2s ease;
+            background: white;
+        }
+
+        .chat-input:focus {
+            border-color: #3b82f6;
+        }
+
+        .send-button {
+            padding: 12px 22px;
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: transform 0.15s ease;
+        }
+
+        .send-button:hover {
+            transform: translateY(-1px);
+        }
+
+        .send-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #6b7280;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .error-message {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px;
+            border: 1px solid #ffcdd2;
+        }
+
+        .system-status {
+            background: #e8f5e8;
+            color: #2e7d32;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px;
+            border: 1px solid #c8e6c9;
+        }
+
+        @media (max-width: 600px) {
+            .chat-container {
+                width: 95%;
+                height: 95vh;
+                border-radius: 10px;
+            }
+
+            .message-content {
+                max-width: 85%;
+            }
+
+            .chat-header {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .dmrc-logo {
+                width: 44px;
+                height: 44px;
+            }
+
+            .dmrc-logo img {
+                width: 42px;
+                height: 42px;
+            }
+
+            .chat-header h1 {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <div class="dmrc-logo">
+                <!-- Replace inline SVG with provided PNG served via /static -->
+                <img src="/static/Delhi_Metro_logo.svg.png" alt="DMRC Logo" />
+            </div>
+            <div class="header-text">
+                <h1>DMRC HRMS Chatbot</h1>
+                <p>Your intelligent HR assistant for policies and procedures</p>
+            </div>
+            <div class="status-indicator {% if not system_initialized %}error{% endif %}"></div>
+        </div>
+
+        <div class="chat-messages" id="chatMessages">
+            {% if not system_initialized %}
+                <div class="error-message">
+                    <strong>⚠️ System Error:</strong> {{ initialization_error or "RAG system not initialized" }}
+                    <br><small>Please check the console logs and ensure all dependencies are properly configured.</small>
+                </div>
+            {% else %}
+                <div class="system-status">
+                    <strong>✅ System Ready:</strong> DMRC HRMS Chatbot is online and ready to help!
+                    <br><small>You can ask questions about employee policies, procedures, guidelines, and more.</small>
+                </div>
+            {% endif %}
+
+            <div class="message bot">
+                <div class="message-avatar"><img src="/static/Delhi_Metro_logo.svg.png" alt="Bot" /></div>
+                <div class="message-content">
+                    <p>Hello! I'm your DMRC HRMS Assistant. I can help you with questions about:</p>
+                    <ul style="margin: 10px 0; padding-left: 20px;">
+                        <li>Employee policies and procedures</li>
+                        <li>HR guidelines and regulations</li>
+                        <li>Leave management and benefits</li>
+                        <li>Performance evaluation processes</li>
+                        <li>Company policies and compliance</li>
+                    </ul>
+                    <p>What would you like to know?</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="loading" id="loadingIndicator">
+            <p>🤔 Thinking...</p>
+        </div>
+
+        <div class="chat-input-container">
+            <form class="chat-input-form" id="chatForm">
+                <input 
+                    type="text" 
+                    class="chat-input" 
+                    id="messageInput" 
+                    placeholder="Ask me about DMRC HR policies..."
+                    {% if not system_initialized %}disabled{% endif %}
+                >
+                <button 
+                    type="submit" 
+                    class="send-button" 
+                    id="sendButton"
+                    {% if not system_initialized %}disabled{% endif %}
+                >
+                    Send
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const chatMessages = document.getElementById('chatMessages');
+        const chatForm = document.getElementById('chatForm');
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+
+        // Auto-scroll to bottom
+        function scrollToBottom() {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Add message to chat
+        function addMessage(content, isUser = false, sources = []) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user' : 'bot'}`;
+
+            const avatar = document.createElement('div');
+            avatar.className = 'message-avatar';
+            if (isUser) {
+                avatar.textContent = '👤';
+            } else {
+                // Use PNG logo for bot avatar
+                const img = document.createElement('img');
+                img.src = '/static/Delhi_Metro_logo.svg.png';
+                img.alt = 'Bot';
+                avatar.appendChild(img);
+            }
+
+            const messageContent = document.createElement('div');
+            messageContent.className = 'message-content';
+            
+            const messageText = document.createElement('p');
+            messageText.innerHTML = content.replace(/\n/g, '<br>');
+            messageContent.appendChild(messageText);
+
+            // Add sources if available
+            if (!isUser && sources && sources.length > 0) {
+                const sourcesDiv = document.createElement('div');
+                sourcesDiv.className = 'sources';
+                
+                const sourcesHeader = document.createElement('h4');
+                sourcesHeader.textContent = `📚 Sources (${sources.length})`;
+                sourcesDiv.appendChild(sourcesHeader);
+
+                sources.forEach(source => {
+                    const sourceItem = document.createElement('div');
+                    sourceItem.className = 'source-item';
+                    
+                    const sourceHeader = document.createElement('div');
+                    sourceHeader.className = 'source-header';
+                    sourceHeader.textContent = `${source.chapter}${source.section ? ' - ' + source.section : ''} (Pages: ${source.pages})`;
+                    
+                    const sourcePreview = document.createElement('div');
+                    sourcePreview.className = 'source-preview';
+                    sourcePreview.textContent = source.content_preview;
+                    
+                    sourceItem.appendChild(sourceHeader);
+                    sourceItem.appendChild(sourcePreview);
+                    sourcesDiv.appendChild(sourceItem);
+                });
+
+                messageContent.appendChild(sourcesDiv);
+            }
+
+            messageDiv.appendChild(avatar);
+            messageDiv.appendChild(messageContent);
+            chatMessages.appendChild(messageDiv);
+            
+            scrollToBottom();
+        }
+
+        // Handle form submission
+        chatForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const message = messageInput.value.trim();
+            if (!message) return;
+
+            // Add user message
+            addMessage(message, true);
+            messageInput.value = '';
+            
+            // Show loading
+            loadingIndicator.classList.add('show');
+            sendButton.disabled = true;
+            messageInput.disabled = true;
+
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ message: message })
+                });
+
+                const data = await response.json();
+
+                if (data.error) {
+                    addMessage(`❌ Error: ${data.message}`, false);
+                } else {
+                    addMessage(data.message, false, data.sources || []);
+                }
+
+            } catch (error) {
+                addMessage(`❌ Network Error: ${error.message}`, false);
+            } finally {
+                // Hide loading
+                loadingIndicator.classList.remove('show');
+                sendButton.disabled = false;
+                messageInput.disabled = false;
+                messageInput.focus();
+            }
+        });
+
+        // Focus input on page load
+        window.addEventListener('load', () => {
+            if (!messageInput.disabled) {
+                messageInput.focus();
+            }
+        });
+
+        // Handle Enter key
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                chatForm.dispatchEvent(new Event('submit'));
+            }
+        });
+    </script>
+</body>
+</html>
