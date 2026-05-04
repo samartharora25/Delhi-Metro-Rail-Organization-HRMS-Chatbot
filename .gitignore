@@ -7,8 +7,6 @@ __pycache__/
 
 # Environments
 .venv/
-.env
-DMRC_Chatbot/.env
 
 # Local data/cache
 DMRC_Chatbot/chroma_db/

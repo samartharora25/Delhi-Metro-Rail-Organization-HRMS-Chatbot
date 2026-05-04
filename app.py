@@ -14,9 +14,16 @@ from flask_login import (
 )
 from supabase import create_client, Client
 from dotenv import load_dotenv
-load_dotenv() 
-# Ensure DMRC_Chatbot package is importable
+
+# Load environment variables (explicit paths to avoid CWD issues)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+load_dotenv(os.path.join(BASE_DIR, ".env"), override=True)
+
+# Also load workspace-level venv env file if present
+WORKSPACE_ENV = os.path.abspath(os.path.join(BASE_DIR, os.pardir, ".venv", ".env"))
+if os.path.exists(WORKSPACE_ENV):
+    load_dotenv(WORKSPACE_ENV, override=True)
+# Ensure DMRC_Chatbot package is importable
 DMRC_DIR = os.path.join(BASE_DIR, "DMRC_Chatbot")
 if DMRC_DIR not in sys.path:
     sys.path.append(DMRC_DIR)
@@ -30,12 +37,10 @@ except Exception as e:
 else:
     _import_error = None
 
-# Load environment variables
-load_dotenv()
 # Also try loading DMRC_Chatbot/.env if present
 dmrc_env = os.path.join(DMRC_DIR, ".env")
 if os.path.exists(dmrc_env):
-    load_dotenv(dmrc_env, override=False)
+    load_dotenv(dmrc_env, override=True)
 
 app = Flask(__name__, template_folder="templates")
 # Secret key for session cookies (set in .env)
@@ -47,8 +52,13 @@ login_manager.login_view = "login"
 login_manager.init_app(app)
 
 # Supabase client (from env)
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
+SUPABASE_URL = os.getenv("SUPABASE_URL") or os.getenv("VITE_SUPABASE_URL")
+SUPABASE_ANON_KEY = (
+    os.getenv("SUPABASE_ANON_KEY")
+    or os.getenv("VITE_SUPABASE_ANON_KEY")
+    or os.getenv("VITE_SUPABASE_ANNON_KEY")
+    or os.getenv("VITE_SUPABASE_KEY")
+)
 # Dev-only bypass login configuration
 ALLOW_DEV_LOGIN = (os.getenv("ALLOW_DEV_LOGIN", "false").lower() == "true")
 DEFAULT_LOGIN_EMAIL = os.getenv("DEFAULT_LOGIN_EMAIL", "")
@@ -177,7 +187,12 @@ def init_rag() -> None:
     try:
         # Prefer existing chunks.json if present, else fall back to sample PDF
         chunks_path = os.path.join(DMRC_DIR, "chunks.json")
-        pdf_path = os.path.join(DMRC_DIR, "data", "Sample HR Policy Manual.pdf")
+        env_pdf_path = (os.getenv("RAG_PDF_PATH") or "").strip()
+        dmrc_pdf_path = os.path.join(DMRC_DIR, "data", "Sample HR Policy Manual.pdf")
+        root_pdf_path = os.path.join(BASE_DIR, "Sample HR Policy Manual.pdf")
+        pdf_path = env_pdf_path or dmrc_pdf_path
+        if not env_pdf_path and not os.path.exists(pdf_path) and os.path.exists(root_pdf_path):
+            pdf_path = root_pdf_path
         chroma_db_path = os.path.join(DMRC_DIR, "chroma_db")
 
         kwargs: Dict[str, Any] = {
@@ -190,8 +205,8 @@ def init_rag() -> None:
             kwargs["pdf_path"] = pdf_path
         else:
             initialization_error = (
-                "No chunks.json or sample PDF found. Please place 'chunks.json' in DMRC_Chatbot/ or a PDF at "
-                "DMRC_Chatbot/data/Sample HR Policy Manual.pdf"
+                "No chunks.json or PDF found. Provide a PDF via RAG_PDF_PATH in .env, or place 'chunks.json' in "
+                "DMRC_Chatbot/, or a PDF at DMRC_Chatbot/data/Sample HR Policy Manual.pdf"
             )
             return
 
@@ -200,7 +215,7 @@ def init_rag() -> None:
         # Build/load vector store and retrieval chain; don't force rebuild by default
         rag_instance.build_rag_system(
             force_rebuild=False,
-            groq_model="llama3-8b-8192",
+            groq_model="llama-3.1-8b-instant",
             temperature=0.1,
             max_tokens=1024,
         )
@@ -217,6 +232,9 @@ def api_status():
     status = {
         "system_initialized": rag is not None and initialization_error is None,
         "initialization_error": initialization_error,
+        "supabase_configured": supabase is not None,
+        "supabase_url_set": bool(SUPABASE_URL),
+        "supabase_anon_key_set": bool(SUPABASE_ANON_KEY),
     }
     if rag is not None:
         try:
